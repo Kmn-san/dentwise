@@ -1,5 +1,6 @@
 "use client"
 
+import { AppointmentConfirmationModal } from "@/components/appointments/AppointmentConfirmationModal";
 import BookingConfirmationStep from "@/components/appointments/BookingConfirmationStep";
 import DoctorSelectionStep from "@/components/appointments/DoctorSelectionStep";
 import ProgressSteps from "@/components/appointments/ProgressSteps";
@@ -53,7 +54,28 @@ function AppointmentsPage() {
                 //store the appointment details to show in the modal
                 setBookedAppointment(appointment)
 
-                //todo send email using resend
+                //send email using resend
+                try {
+                    const emailResponse = await fetch("/api/send-appointment-email", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({
+                            userEmail: appointment.patientEmail,
+                            doctorName: appointment.doctorName,
+                            appointmentDate: format(new Date(appointment.date), "EEEE, MMMM d, yyyy"),
+                            appointmentTime: appointment.time,
+                            appointmentType: appointmentType?.name,
+                            duration: appointmentType?.duration,
+                            price: appointmentType?.price,
+                        }),
+                    });
+
+                    if (!emailResponse.ok) console.error("Failed to send confirmation email");
+                } catch (error) {
+                    console.error("Error sending confirmation email:", error);
+                }
 
                 //show the success modal
                 setShowConfirmationModal(true)
@@ -118,7 +140,7 @@ function AppointmentsPage() {
                 )}
             </div>
 
-            {/* {bookedAppointment && (
+            {bookedAppointment && (
                 <AppointmentConfirmationModal
                     open={showConfirmationModal}
                     onOpenChange={setShowConfirmationModal}
@@ -129,7 +151,7 @@ function AppointmentsPage() {
                         userEmail: bookedAppointment.patientEmail,
                     }}
                 />
-            )} */}
+            )}
 
             {/* SHOW EXISTING APPOINTMENTS FOR THE CURRENT USER */}
             {userAppointments.length > 0 && (
